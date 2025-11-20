@@ -3,6 +3,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
+// 🔥 Aquí tomamos la variable del entorno de Vercel
+const API = process.env.REACT_APP_API_URL;
+
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -10,8 +13,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-
-  const API_URL = import.meta.env.VITE_API_URL; // ← Aquí la variable de entorno
 
   const getToken = () => localStorage.getItem("token");
 
@@ -21,15 +22,16 @@ const Login = () => {
       const token = getToken();
       if (token) {
         try {
-          const verifyResponse = await fetch(`${API_URL}/api/auth/verify`, {
+          const response = await fetch(`${API}/api/auth/verify`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
           });
-          if (verifyResponse.ok) {
-            const data = await verifyResponse.json();
+
+          if (response.ok) {
+            const data = await response.json();
             localStorage.setItem("user", JSON.stringify(data.user));
             navigate("/dashboard");
           } else {
@@ -42,8 +44,9 @@ const Login = () => {
         }
       }
     };
+
     checkAuth();
-  }, [navigate, API_URL]);
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -51,33 +54,31 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const loginResponse = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch(`${API}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await loginResponse.json();
+      const data = await response.json();
 
-      if (loginResponse.ok) {
+      if (response.ok) {
         localStorage.setItem("token", data.token || "");
         localStorage.setItem("user", JSON.stringify(data.user));
         alert(`¡Bienvenido, ${data.user.nombre}! Rol: ${data.user.rol}`);
         navigate("/dashboard");
       } else {
-        if (loginResponse.status === 401)
+        if (response.status === 401)
           setError("Credenciales inválidas: Username o password incorrecto");
-        else if (loginResponse.status === 500)
-          setError(
-            "Error en el servidor. Verifica que el backend esté en Render."
-          );
+        else if (response.status === 500)
+          setError("Error en el servidor. Verifica que el backend esté en Render.");
         else setError(data.message || "Error en el login");
 
         localStorage.removeItem("token");
         localStorage.removeItem("user");
       }
     } catch {
-      setError("Error de conexión: Verifica si el backend está en ejecución.");
+      setError("Error de conexión: No se pudo conectar con el servidor.");
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     } finally {

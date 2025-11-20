@@ -14,9 +14,11 @@ const VentasReport = () => {
   const [fechaHasta, setFechaHasta] = useState('2025-10-31');
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    fetchVentas();
-  }, []);
+useEffect(() => {
+  fetchVentas();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
 
   // 🔄 Obtener ventas del backend
   const fetchVentas = async () => {
